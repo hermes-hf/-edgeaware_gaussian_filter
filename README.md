@@ -5,7 +5,7 @@
   
   In the jupyter_folder we also provide with a jupyter notebook with the code used to generate the figures in the work.
   
-  We make use of the stb image processing headers, provided in https://github.com/nothings/stb.
+  To load images in C environment we make use of the stb image processing headers (not our authorship), provided in https://github.com/nothings/stb.
   
   Compatibility:
   - We used the nvcc compiler version 10.2.
