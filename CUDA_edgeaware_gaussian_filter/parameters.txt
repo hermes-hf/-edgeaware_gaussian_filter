@@ -1,0 +1,5 @@
+image kodak20.jpg
+sigma 0
+sigmar 0
+kappa 0
+blocks_per_line 0
