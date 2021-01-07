@@ -11,7 +11,7 @@ using namespace std;
 
 __device__ void read_blockint_to_shareint(uchar4 *simg, uchar4 *img, int i_start, int i_end, int col_index, int block_col_index, int width, int channels, int window_w, int pad){
     int i;
-    //assume o uso de todas warps : stride 4, comecando no warpid=threadid/32
+    //assumes all warps are being used: stride 4, begins at warp_id= threadid/32
     for(i= threadIdx.x/32;i<i_end-i_start;i=i+4){
         simg[i*(window_w+pad) + block_col_index]=img[(i_start+i)*(width) + col_index];
     }
@@ -25,9 +25,8 @@ __device__ void write_shareint_to_block( uchar4 *simg, uchar4 *img, int i_start,
     }
 }
 
-__global__ //deve ser chamada em toda a imagem e opera em todo espectro
+__global__ 
 void gaussian_filter_kernel_horizontal_anticausal(uchar4  *outputimage,float sigma_h,float s_quotient,thrust:: complex <float> *constant, uchar4 *img,int width, int height,int channels, int window_w, int window_h, int sharedpad, float kappa,int line_count){
-    //IDEIA ARMAZENAR MAIOR DESVIO EM SIMG PARA EVITAR DIVERGENCIA
 
     int i,j,k,j_start=0,j_end = window_w,i_start,i_end;
     uchar4 buffer;
@@ -35,13 +34,11 @@ void gaussian_filter_kernel_horizontal_anticausal(uchar4  *outputimage,float sig
     int j_min;
     float dist;
     float f[3],f_prev[3],delta;
-    extern __shared__  uchar4 simg[]; //shared image de tamanho window_w*window_h*channels
+    extern __shared__  uchar4 simg[]; //shared image de size window_w*window_h*channels
     thrust::complex<float> prevg0_acausal[3],prevg1_acausal[3],g0[3],g1[3];
     thrust::complex<float> b_delta,aux;
 
-    //determinar i? cada thread sempre opera no mesmo i
     i = threadIdx.x + window_h*blockIdx.x;
-     //threads acima da imagem nao executam
     
     j_end = width - (width/line_count)*blockIdx.y;
     j_start = j_end - window_w;
@@ -51,7 +48,7 @@ void gaussian_filter_kernel_horizontal_anticausal(uchar4  *outputimage,float sig
 
     aux.real(0);
     aux.imag(0);
-    //APROXIMAR
+    //APPROXIMATE
 
     if(kappa>=0){
 
@@ -69,7 +66,7 @@ void gaussian_filter_kernel_horizontal_anticausal(uchar4  *outputimage,float sig
             while(j<width-1 && (dist<sigma_h*kappa)){
                 j=j+1;
                 delta=0;
-                //obter valores atuais da imagem e armazena na memoria shared
+                //get current values of the image and store in shared memory
                 buffer = img[i*width +j];
                 f[0] = buffer.x;
                 f[1] = buffer.y;
@@ -86,7 +83,7 @@ void gaussian_filter_kernel_horizontal_anticausal(uchar4  *outputimage,float sig
                 }
                 //
                 dist = dist + delta;
-                //atualiza prev
+                //update previous values
                 for(k=0;k<channels;k++){
                     f_prev[k] = f[k];
                 }
@@ -96,9 +93,8 @@ void gaussian_filter_kernel_horizontal_anticausal(uchar4  *outputimage,float sig
 
             for(j = j; j>= j_end; j= j-1){
         
-                //deve calcular dt
+
                 delta=0;
-                //obter valores atuais da imagem
                 buffer = img[i*width +j];
                 f[0] = buffer.x;
                 f[1] = buffer.y;
@@ -118,8 +114,7 @@ void gaussian_filter_kernel_horizontal_anticausal(uchar4  *outputimage,float sig
                 delta = delta*s_quotient +float(1.00);
                 delta = sqrt(delta);
 
-                ///calculos
-    
+
                 //b_delta = pow(constant[3],delta);
                 b_delta.real(__cosf(delta*constant[9].real()));
                 b_delta.imag(__sinf(delta*constant[9].real()));
@@ -148,7 +143,6 @@ void gaussian_filter_kernel_horizontal_anticausal(uchar4  *outputimage,float sig
                     g1[k] = g1[k] + (aux - constant[8]*constant[4])*f[k] - (aux - constant[8]*b_delta)*f_prev[k];
                 }
     
-                //atualiza vetores
                 for(k=0;k<channels;k++){
                     f_prev[k] = f[k];
                     prevg0_acausal[k] = g0[k];
@@ -165,9 +159,9 @@ void gaussian_filter_kernel_horizontal_anticausal(uchar4  *outputimage,float sig
 
     
 
-    //LER IMAGEM PARA SHARED
+    //Read image to shared
 
-    while(j_end > j_min){ //deve percorrer horizontalmente ->
+    while(j_end > j_min){ //travels horizontally ->
 
         
 
@@ -178,7 +172,7 @@ void gaussian_filter_kernel_horizontal_anticausal(uchar4  *outputimage,float sig
         }
         
 
-        //coluna = threadidx.x%32
+        //column = threadidx.x%32
         if(threadIdx.x%32<j_end-j_start)
         read_blockint_to_shareint(simg, img,i_start,i_end,  j_start+threadIdx.x%32, threadIdx.x%32, width,  channels, window_w, sharedpad);
         __syncthreads();
@@ -189,9 +183,8 @@ void gaussian_filter_kernel_horizontal_anticausal(uchar4  *outputimage,float sig
             
             for(j = j_end-1; j>= j_start; j= j-1){
                 
-                //deve calcular dt
                 delta=0;
-                //obter valores atuais da imagem
+
                 buffer = simg[threadIdx.x*(window_w + sharedpad) + block_j];
                 f[0] = buffer.x;
                 f[1] = buffer.y;
@@ -211,8 +204,7 @@ void gaussian_filter_kernel_horizontal_anticausal(uchar4  *outputimage,float sig
                 delta = delta*s_quotient +float(1.00);
                 delta = sqrt(delta);
 
-                ///calculos
-    
+  
                 //b_delta = pow(constant[3],delta);
                 b_delta.real(__cosf(delta*constant[9].real()));
                 b_delta.imag(__sinf(delta*constant[9].real()));
@@ -241,7 +233,6 @@ void gaussian_filter_kernel_horizontal_anticausal(uchar4  *outputimage,float sig
                     g1[k] = g1[k] + (aux - constant[8]*constant[4])*f[k] - (aux - constant[8]*b_delta)*f_prev[k];
                 }
     
-                //atualiza vetores
                 for(k=0;k<channels;k++){
                     f_prev[k] = f[k];
                     prevg0_acausal[k] = g0[k];
@@ -275,10 +266,7 @@ void gaussian_filter_kernel_horizontal_anticausal(uchar4  *outputimage,float sig
         }
 
 
-
-
-        //fim dos calculos
-
+        //output to device
 
         __syncthreads();
         if(threadIdx.x%32<j_end-j_start)
@@ -296,9 +284,8 @@ void gaussian_filter_kernel_horizontal_anticausal(uchar4  *outputimage,float sig
 }
 
 
-__global__ //deve ser chamada em toda a imagem e opera em todo espectro
+__global__ 
 void gaussian_filter_kernel_horizontal_causal(uchar4  *outputimage,float sigma_h,float s_quotient,thrust:: complex <float> *constant, uchar4 *img,int width, int height,int channels, int window_w, int window_h, int sharedpad, float kappa,int line_count){
-    //IDEIA ARMAZENAR MAIOR DESVIO EM SIMG PARA EVITAR DIVERGENCIA
 
     int i,j,k,i_start,i_end;
     int j_start = (width/line_count)*blockIdx.y,j_end = window_w + j_start;
@@ -311,13 +298,11 @@ void gaussian_filter_kernel_horizontal_causal(uchar4  *outputimage,float sigma_h
     uchar4 buffer;
     int block_j;
     float f[3],f_prev[3],delta;
-    extern __shared__  uchar4 simg[]; //shared image de tamanho window_w*window_h*channels
+    extern __shared__  uchar4 simg[];
     thrust::complex<float> prevg0_causal[3],prevg0_acausal[3],prevg1_acausal[3],prevg1_causal[3],g0[3],g1[3];
     thrust::complex<float> b_delta,aux;
 
-    //determinar i? cada thread sempre opera no mesmo i
     i = threadIdx.x + window_h*blockIdx.x;
-     //threads acima da imagem nao executam
     aux.real(0);
     aux.imag(0);
 
@@ -335,7 +320,6 @@ void gaussian_filter_kernel_horizontal_causal(uchar4  *outputimage,float sigma_h
                 f_prev[1] = buffer.y;
                 f_prev[2] = buffer.z;
 
-                //obter valores atuais da imagem e armazena na memoria shared
                 buffer = img[i*width +j];
                 f[0] = buffer.x;
                 f[1] = buffer.y;
@@ -351,7 +335,6 @@ void gaussian_filter_kernel_horizontal_causal(uchar4  *outputimage,float sigma_h
                 }
                 //
                 dist = dist + delta;
-                //atualiza prev
                 for(k=0;k<channels;k++){
                     f_prev[k] = f[k];
                 }
@@ -361,7 +344,6 @@ void gaussian_filter_kernel_horizontal_causal(uchar4  *outputimage,float sigma_h
             for(j=j;j<= j_start;j++){
 
                 delta=0;
-                //obter valores atuais da imagem
                     buffer = img[i*width +j];
                     f[0] = buffer.x;
                     f[1] = buffer.y;
@@ -408,7 +390,6 @@ void gaussian_filter_kernel_horizontal_causal(uchar4  *outputimage,float sigma_h
                     g1[k] = g1[k] + (aux - constant[8]*constant[4])*f[k] - (aux - constant[8]*b_delta)*f_prev[k];
                 }
     
-                //atualiza vetores
                 for(k=0;k<channels;k++){
                     f_prev[k] = f[k];
                     prevg0_causal[k] = g0[k];
@@ -418,10 +399,9 @@ void gaussian_filter_kernel_horizontal_causal(uchar4  *outputimage,float sigma_h
             }
         }
 
-    //DEVE APROXIMAR AS CONDICOES INICIAIS!!
 
-    //LER IMAGEM PARA SHARED
-    while(j_start < j_max){ //deve percorrer horizontalmente ->
+    //Read image to shared
+    while(j_start < j_max){ 
 
         j_end = j_start +window_w;
         
@@ -443,17 +423,13 @@ void gaussian_filter_kernel_horizontal_causal(uchar4  *outputimage,float sigma_h
         __syncthreads();
 
     
-        //realiza calculos
 
-
-        if(1==1 && i<height){ //caso causal
-            
+        if(i<height){             
 
             block_j = 0;
     
             for(j = j_start; j< j_end; j++){
                 delta=0;
-                //obter valores atuais da imagem
                     buffer = simg[threadIdx.x*(window_w + sharedpad)+block_j];
                     f[0] = buffer.x;
                     f[1] = buffer.y;
@@ -506,11 +482,7 @@ void gaussian_filter_kernel_horizontal_causal(uchar4  *outputimage,float sigma_h
                     prevg1_causal[k] = g1[k];
                 }
     
-                //if(j>= j_start)
-                //for(k =0;k<channels;k++)
-                //right[i*channels*width + j*channels+k]=int(abs((g0[k]+g1[k]).real()));
-                //simg[threadIdx.x*(window_w+sharedpad) + block_j]=4294967295;
-                
+              
                 aux.real(int(abs((g0[0]+g1[0]).real())));
                 if(aux.real()>255){
                     buffer.x = 255;
