@@ -11,7 +11,6 @@ using namespace std;
 
 __device__ void read_blockint_to_shareint(uchar4 *simg, uchar4 *img, int i_start, int i_end, int col_index, int block_col_index, int width, int channels, int window_w, int pad){
     int i;
-    //assume o uso de todas warps : stride 4, comecando no warpid=threadid/32
     for(i= threadIdx.x/32;i<i_end-i_start;i=i+4){
         simg[i*(window_w+pad) + block_col_index]=img[(i_start+i)*(width) + col_index];
     }
@@ -91,9 +90,7 @@ void gaussian_filter_kernel_horizontal_anticausal(uchar4  *outputimage,float sig
                         if(j==0){
                             delta=1;
                         }
-                        //
                         dist = dist + delta;
-                        //atualiza prev
                         for(k=0;k<channels;k++){
                             f_prev[k] = f[k];
                         }
@@ -103,9 +100,7 @@ void gaussian_filter_kernel_horizontal_anticausal(uchar4  *outputimage,float sig
 
                     for(j = j; j>= j_end; j= j-1){
                 
-                        //deve calcular dt
                         delta=0;
-                        //obter valores atuais da imagem
                         buffer = img[i*width +j];
                         f[0] = buffer.x;
                         f[1] = buffer.y;
@@ -125,7 +120,6 @@ void gaussian_filter_kernel_horizontal_anticausal(uchar4  *outputimage,float sig
                         delta = delta*s_quotient +float(1.00);
                         delta = sqrt(delta);
         
-                        ///calculos
             
                         //b_delta = pow(constant[3],delta);
                         b_delta.real(__cosf(delta*constant[9].real()));
@@ -155,7 +149,6 @@ void gaussian_filter_kernel_horizontal_anticausal(uchar4  *outputimage,float sig
                             g1[k] = g1[k] + (aux - constant[8]*constant[4])*f[k] - (aux - constant[8]*b_delta)*f_prev[k];
                         }
             
-                        //atualiza vetores
                         for(k=0;k<channels;k++){
                             f_prev[k] = f[k];
                             prevg0_acausal[k] = g0[k];
