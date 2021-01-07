@@ -41,7 +41,7 @@ uchar4 *convert_uimg_to_uchar4(int width, int height, int channels, unsigned cha
             output[i*width+j].x = img[i*width*channels+ j*channels];
             output[i*width+j].y = img[i*width*channels+ j*channels + 1];
             output[i*width+j].z = img[i*width*channels+ j*channels + 2];
-            output[i*width+j].w = 255; //define opacidade
+            output[i*width+j].w = 255; // opacity
         }
     }
 
