@@ -10,7 +10,7 @@ using namespace std;
 
 #define HEADER_H
 
-    //TABELA DE VALORES COMPLEXOS USADOS
+    //Complex values table
 
     static const thrust::complex <float> alpha0(1.6800,3.7350);
     static const thrust::complex <float> alpha1(-0.6803,-0.2598);
