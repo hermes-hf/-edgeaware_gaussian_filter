@@ -39,7 +39,7 @@ uchar4 *convert_uimg_to_uchar4(int width, int height, int channels, unsigned cha
             output[i*width+j].x = img[i*width*channels+ j*channels];
             output[i*width+j].y = img[i*width*channels+ j*channels + 1];
             output[i*width+j].z = img[i*width*channels+ j*channels + 2];
-            output[i*width+j].w = 255; //define opacidade
+            output[i*width+j].w = 255; //define opacity
         }
     }
 
@@ -92,12 +92,12 @@ void image_kernel_call_horizontal(uchar4 *auximage,uchar4 *outputimage,float sig
     cudaStreamCreate(&stream1);
     cudaStreamCreate(&stream2);
     
-    int sharedpad=5; // padding de 5 gerou 0 conflicts!
+    int sharedpad=5;
 
     int nv_blocks = ceil(height/(1.00*window_h));
 
-    dim3 grid(nv_blocks,line_count,1); //grade de blocos, colocar 3 faixas por linha
-    dim3 block(window_h,1,1); //altura = numero de cores
+    dim3 grid(nv_blocks,line_count,1); 
+    dim3 block(window_h,1,1); //height: number of cores used
     
     float s_quotient = sigma_h/sigma_r;
     s_quotient = s_quotient* s_quotient;
@@ -155,7 +155,7 @@ void image_filter2d(float sigma_h,float sigma_r,uchar4 *inputimage,int width,int
     uchar4 *device_in, *device_out, *aux, *auximage;
 
     float sigma;
-    float ratio = 1.00/2.00; //taxa de decrescimento dos sigma
+    float ratio = 1.00/2.00; // sigma is multiplied by "ratio"
     int num_it = 2,i;
    
     //COMPUTE CONSTANTS
@@ -176,7 +176,7 @@ void image_filter2d(float sigma_h,float sigma_r,uchar4 *inputimage,int width,int
     auto start = high_resolution_clock::now(); 
    
 
-    ///CALCULO INICIAL : TRANSFERE IMAGEM PARA DEVICE 
+    
     for(i=0;i<num_it ;i++){
 
         compute_constants(constant,sigma);
