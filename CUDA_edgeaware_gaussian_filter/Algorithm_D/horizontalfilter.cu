@@ -56,7 +56,7 @@ void gaussian_filter_kernel_horizontal_anticausal(uchar4  *outputimage,float sig
         __syncthreads();
 
 
-        if(1==1 && i<height){ 
+        if(i<height){ 
             block_j = (j_end-j_start)-1;
             
             if(kappa>=0){
@@ -75,7 +75,6 @@ void gaussian_filter_kernel_horizontal_anticausal(uchar4  *outputimage,float sig
                     while(j<width-1 && (dist<sigma_h*kappa)){
                         j=j+1;
                         delta=0;
-                        //obter valores atuais da imagem e armazena na memoria shared
                         buffer = img[i*width +j];
                         f[0] = buffer.x;
                         f[1] = buffer.y;
@@ -295,7 +294,7 @@ void gaussian_filter_kernel_horizontal_causal(uchar4  *outputimage,float sigma_h
         __syncthreads();
 
 
-        if(1==1 && i<height){             
+        if(i<height){             
 
             block_j = 0;
             if(kappa>=0){
