@@ -56,7 +56,7 @@ void gaussian_filter_kernel_horizontal_anticausal(uchar4  *outputimage,float sig
         __syncthreads();
 
 
-        if(1==1 && i<height){ 
+        if(i<height){ 
             block_j = (j_end-j_start)-1;
             
             for(j = j_end-1; j>= j_start; j= j-1){
@@ -194,7 +194,7 @@ void gaussian_filter_kernel_horizontal_causal(uchar4  *outputimage,float sigma_h
         __syncthreads();
 
 
-        if(1==1 && i<height){             
+        if(i<height){             
 
             block_j = 0;
     
@@ -250,7 +250,7 @@ void gaussian_filter_kernel_horizontal_causal(uchar4  *outputimage,float sigma_h
                     prevg0_causal[k] = g0[k];
                     prevg1_causal[k] = g1[k];
                 }
-                
+                //Check if value is within RGB range
                 aux.real(int(abs((g0[0]+g1[0]).real())));
                 if(aux.real()>255){
                     buffer.x = 255;
