@@ -24,7 +24,7 @@ int main(int argc, char* argv[]){
     int line_count;
     char imagefile[20];
     char filelocation[100] = "../images/";
-    //parametros da janela cuda
+    //cuda window parameters
     int window_h = 128, window_w = 24;
 
     //Read parameters
@@ -40,7 +40,7 @@ int main(int argc, char* argv[]){
     unsigned char *img_vector = stbi_load(filelocation,&width,&height,&channels,0);     //CARREGA JPG USANDO STBI
     uchar4 *i_image;
 
-    if(img_vector==NULL){ //NAO CONSEGUIU LER IMAGEM
+    if(img_vector==NULL){ //could not read image
 	printf("erro\n");
         return -1;
     }
