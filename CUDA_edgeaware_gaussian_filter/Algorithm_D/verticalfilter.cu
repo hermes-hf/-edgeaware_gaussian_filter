@@ -64,7 +64,7 @@ void gaussian_filter_kernel_vertical_causal(uchar4 *outputimage,float sigma_h,fl
 
         j = threadIdx.x + window_w*blockIdx.x;
         
-        if(1==1 && threadIdx.x<j_end-j_start){ 
+        if(threadIdx.x<j_end-j_start){ 
 
             block_i = 0;
             if(kappa>=0){
