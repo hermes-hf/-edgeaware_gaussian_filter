@@ -1,5 +1,5 @@
 # cuda_edgeaware_gaussian_filter
-  Inside the folder are the 3 algorithms used throught the work. When given no argv inputs, each algorithm will run using the arguments given on the parameters.txt file, choosing an image inside the images folder acoording to the file name given.
+  Inside the folder, there are the 3 algorithms used throught the work. When given no argv inputs, each algorithm will run using the arguments given on the parameters.txt file, choosing an image inside the images folder according to the file name given.
   
   We provide a folder "images" with the images used in our work. Filtered images are placed in the output folder. Kappa_compare_A_and_D folder is used when comparing the MSE between the outputs.
   
